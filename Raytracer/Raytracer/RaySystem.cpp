@@ -171,17 +171,17 @@ AvxVector3 RaySystem::trace(int ind, int depth)
 	__m256 dotDirNor = dot_product(rayDir, hitNormal);
 	__m256 condMask = _mm256_cmp_ps(dotDirNor, zero8, _CMP_LT_OS);
 
-	__m256 refracIndex = _mm256_blendv_ps(one8, _mm256_mul_ps(matRefracIndex, matRefracIndex), condMask);
+	__m256 refracIndex = _mm256_blendv_ps(_mm256_mul_ps(matRefracIndex, matRefracIndex), one8, condMask);
 	__m256 cosTheta = _mm256_div_ps(_mm256_sub_ps(one8, _mm256_mul_ps(_mm256_set1_ps(1.000586f), _mm256_sub_ps(_mm256_set1_ps(1), _mm256_mul_ps(dotDirNor, dotDirNor)))), _mm256_mul_ps(refracIndex, refracIndex));
 	__m256 refractedMask = _mm256_cmp_ps(cosTheta, zero8, _CMP_GT_OS);
 	AvxVector3 sinPhi = mul(sub(rayDir, mul(hitNormal, dotDirNor)), refracIndex);
 	AvxVector3 refDir = normalize(sub(sinPhi, mul(hitNormal, _mm256_sqrt_ps(cosTheta))));
-	AvxVector3 refractDir = blend(refDir, zeroVec, refractedMask);
+	AvxVector3 refractDir = blend(zeroVec, refDir, refractedMask);
 	AvxVector3 negMatAbs = { -hitInfo.mat.absx, -hitInfo.mat.absy, -hitInfo.mat.absz };
 	AvxVector3 power = mul(negMatAbs, refractDir);
 	__m256 e8 = _mm256_set1_ps(E);
 	AvxVector3 kp8 = { _mm256_pow_ps(e8, power.x), _mm256_pow_ps(e8, power.y), _mm256_pow_ps(e8, power.z) };
-	AvxVector3 k = blend(kp8, zeroVec, _mm256_andnot_ps(refracMask, condMask));
+	AvxVector3 k = blend(zeroVec, kp8, _mm256_andnot_ps(refracMask, condMask));
 
 	__m256 R0 = _mm256_div_ps(_mm256_mul_ps(_mm256_sub_ps(matRefracIndex, one8), _mm256_sub_ps(matRefracIndex, one8)), _mm256_mul_ps(_mm256_add_ps(matRefracIndex, one8), _mm256_add_ps(matRefracIndex, one8)));
 	__m256 c_comp = _mm256_sub_ps(one8, dotDirNor);
@@ -199,7 +199,7 @@ AvxVector3 RaySystem::trace(int ind, int depth)
 	dirY[ind] = mirrDir.y;
 	dirZ[ind] = mirrDir.z;
 	length[ind] = _mm256_set1_ps(1000);
-	AvxVector3 mCol = trace(ind, depth + 1);
+	AvxVector3 mCol = zeroVec;// trace(ind, depth + 1);
 
 	// refracted ray
 	AvxVector3 newOriginR = add(hitPos, mul(refractDir, migraine8));
@@ -210,7 +210,7 @@ AvxVector3 RaySystem::trace(int ind, int depth)
 	dirY[ind] = refractDir.y;
 	dirZ[ind] = refractDir.z;
 	length[ind] = _mm256_set1_ps(1000);
-	AvxVector3 rCol = trace(ind, depth + 1);
+	AvxVector3 rCol = zeroVec;// trace(ind, depth + 1);
 
 	// two rays bounced on one hit
 	AvxVector3 color1 = add(mul(mul(k, R), mCol), mul(rCol, _mm256_sub_ps(one8, R)));
@@ -245,11 +245,11 @@ AvxVector3 RaySystem::trace(int ind, int depth)
 		colx = _mm256_add_ps(colz, lightColor.z);
 	}
 
-	AvxVector3 calcLight = { colx, coly, colz };
+	AvxVector3 calcLight = { colz, coly, colx };
 	AvxVector3 color2 = mul(calcLight, diffCol);
-	r[ind] = _mm256_mul_ps(_mm256_blendv_ps(color1.x, color2.x, refracMask), distMask);
-	g[ind] = _mm256_mul_ps(_mm256_blendv_ps(color1.y, color2.y, refracMask), distMask);
-	b[ind] = _mm256_mul_ps(_mm256_blendv_ps(color1.y, color2.y, refracMask), distMask);
+	r[ind] = _mm256_and_ps(_mm256_blendv_ps(color2.x, color1.x, refracMask), distMask);
+	g[ind] = _mm256_and_ps(_mm256_blendv_ps(color2.y, color1.y, refracMask), distMask);
+	b[ind] = _mm256_and_ps(_mm256_blendv_ps(color2.z, color1.z, refracMask), distMask);
 
 	return { r[ind], g[ind], b[ind] };
 
