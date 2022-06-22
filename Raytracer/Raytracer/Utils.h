@@ -43,7 +43,7 @@ inline AvxVector3 normalize(AvxVector3 v) {
 }
 
 inline __m256 dot_product(AvxVector3 v1, AvxVector3 v2) {
-	return _mm256_fmadd_ps(_mm256_mul_ps(v1.x, v2.x), _mm256_mul_ps(v1.y, v2.y), _mm256_mul_ps(v1.z, v2.z));
+	return _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(v1.x, v2.x), _mm256_mul_ps(v1.y, v2.y)), _mm256_mul_ps(v1.z, v2.z));
 }
 
 inline __m256 vector_length(AvxVector3 v) {
