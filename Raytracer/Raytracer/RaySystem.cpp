@@ -161,11 +161,10 @@ AvxVector3 RaySystem::trace(int ind, int depth)
 	
 	// end of hit function
 
-	__m256 distMask = _mm256_cmp_ps(hitInfo.dist, _mm256_set1_ps(RAYTRACER_MAX_RENDERDISTANCE), _CMP_GT_OS);
+	__m256 distMask = _mm256_cmp_ps(hitInfo.dist, _mm256_set1_ps(RAYTRACER_MAX_RENDERDISTANCE), _CMP_LE_OS);
 	__m256 one8 = _mm256_set1_ps(1);
 	__m256 matRefracIndex = hitInfo.mat.refracIndex;
 	__m256 refracMask = _mm256_cmp_ps(matRefracIndex, one8, _CMP_GT_OS);
-
 
 	AvxVector3 rayDir = { dx, dy, dz };
 	AvxVector3 hitNormal = { hitInfo.nx, hitInfo.ny, hitInfo.nz };
@@ -247,16 +246,10 @@ AvxVector3 RaySystem::trace(int ind, int depth)
 	}
 
 	AvxVector3 calcLight = { colx, coly, colz };
-	AvxVector3 normalCol = mul(calcLight, diffCol);
-	__m256 mirror8 = hitInfo.mat.mirror;
-	__m256 mirrorMask = _mm256_cmp_ps(mirror8, zero8, _CMP_EQ_OS);
-	AvxVector3 mirrCol = mul(diffCol, mCol);
-	AvxVector3 finalCol = add(mul(mirrCol, mirror8), mul(normalCol, _mm256_sub_ps(one8, mirror8)));
-
-	AvxVector3 color2 = { _mm256_blendv_ps(normalCol.x, finalCol.x, mirrorMask), _mm256_blendv_ps(normalCol.y, finalCol.y, mirrorMask), _mm256_blendv_ps(normalCol.z, finalCol.z, mirrorMask) };
-	r[ind] = _mm256_blendv_ps(color1.x, color2.x, refracMask);
-	g[ind] = _mm256_blendv_ps(color1.y, color2.y, refracMask);
-	b[ind] = _mm256_blendv_ps(color1.y, color2.y, refracMask);
+	AvxVector3 color2 = mul(calcLight, diffCol);
+	r[ind] = _mm256_mul_ps(_mm256_blendv_ps(color1.x, color2.x, refracMask), distMask);
+	g[ind] = _mm256_mul_ps(_mm256_blendv_ps(color1.y, color2.y, refracMask), distMask);
+	b[ind] = _mm256_mul_ps(_mm256_blendv_ps(color1.y, color2.y, refracMask), distMask);
 
 	return { r[ind], g[ind], b[ind] };
 
