@@ -61,9 +61,6 @@ void RaySystem::draw(Pixel* pixelBuffer) {
 	for (unsigned int j = 0; j < (height * width) / AVX_SIZE; j++)
 	{
 		trace(j, 0);
-		r[j] = _mm256_min_ps(r[j], _mm256_setzero_ps());
-		g[j] = _mm256_min_ps(r[j], _mm256_setzero_ps());
-		b[j] = _mm256_min_ps(r[j], _mm256_setzero_ps());
 
 		// Please check later if this is correct lol
 		unsigned int startIndex = j * AVX_SIZE * 4;
@@ -247,9 +244,9 @@ AvxVector3 RaySystem::trace(int ind, int depth)
 
 	AvxVector3 calcLight = { colz, coly, colx };
 	AvxVector3 color2 = mul(calcLight, diffCol);
-	r[ind] = _mm256_and_ps(_mm256_blendv_ps(color2.x, color1.x, refracMask), distMask);
-	g[ind] = _mm256_and_ps(_mm256_blendv_ps(color2.y, color1.y, refracMask), distMask);
-	b[ind] = _mm256_and_ps(_mm256_blendv_ps(color2.z, color1.z, refracMask), distMask);
+	r[ind] = _mm256_mul_ps(_mm256_and_ps(_mm256_blendv_ps(color2.x, color1.x, refracMask), distMask), _mm256_set1_ps(255));
+	g[ind] = _mm256_mul_ps(_mm256_and_ps(_mm256_blendv_ps(color2.y, color1.y, refracMask), distMask), _mm256_set1_ps(255));
+	b[ind] = _mm256_mul_ps(_mm256_and_ps(_mm256_blendv_ps(color2.z, color1.z, refracMask), distMask), _mm256_set1_ps(255));
 
 	return { r[ind], g[ind], b[ind] };
 
