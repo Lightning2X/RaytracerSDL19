@@ -21,7 +21,7 @@ void RaytracerRenderer::draw(int iteration)
 	Vec3Df xOffset = Vec3Df( (camera->getTopRight() - camera->getTopLeft()) / (width - 1));
 	Vec3Df yOffset = Vec3Df((camera->getBottomLeft() - camera->getTopLeft()) / (height - 1));
 	#pragma unroll
-	for (unsigned int y = 0; y < height; y++)
+	for (unsigned int y = 0; y < height; y++) 
 	{
 		for (unsigned int x = 0; x < width; x+=2)
 		{

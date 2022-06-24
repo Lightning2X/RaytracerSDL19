@@ -1,12 +1,18 @@
 #include "precomp.h"
+#include "time.h" 
+ 
+#include <stdio.h>
+
 
 // Window
 Window* window = NULL;
-Screen* screen = NULL;
+Screen* screen = NULL; 
 RaytracerRenderer* renderer = NULL;
 Scene* defaultScene = NULL;
 Camera* camera = NULL;
-int iteration;
+int iteration; 
+FILE* f = fopen("out.txt", " w");
+
 
 bool initializeSDLEnvironment()
 {
@@ -24,7 +30,7 @@ bool initializeSDLEnvironment()
 }
 
 void SetupRaytracer()
-{
+{  
 	window = new Window("Raytracer", SCREEN_POSX, SCREEN_POSY, SCREEN_WIDTH, SCREEN_HEIGHT);
 	screen = new Screen(window, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	screen->prepareScreen();
@@ -33,7 +39,7 @@ void SetupRaytracer()
 }
 
 void LoadConfig()
-{
+{ 
 	defaultScene = new Scene();
 	renderer->setScene(defaultScene);
 	renderer->setCamera(camera);
@@ -71,7 +77,12 @@ void loop()
 		const static Uint64 freq = SDL_GetPerformanceFrequency();
 		const double seconds = (end - start) / static_cast<double>(freq);
 		printf("Frame time: %f FPS: % f\n",seconds, 1 / seconds);
-		#endif
+		fprintf(f, "%f\n", 1 / seconds);
+		#endif 
+		if ((clock() / CLOCKS_PER_SEC) > 20) {
+			fclose(f);
+			exit(0);
+		}
 	}
 }
 
